@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AlgoCompare — Compare two algorithms</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M8 22l5-7 4 4 7-10' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#4f46e5"/><path d="M8 22l5-7 4 4 7-10" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div>
+        <h1>AlgoCompare</h1>
+        <p>Compare two algorithms for the same task — tested equivalence · theoretical complexity · empirical performance</p>
+      </div>
+    </div>
+    <button class="btn ghost" id="toggle-about">How it works</button>
+  </header>
+
+  <main>
+    <!-- ================= Pipeline / architecture strip ================= -->
+    <section class="pipeline" id="pipeline" aria-label="Analysis pipeline">
+      <div class="stage" data-stage="input"><span class="num">1</span><span>Input &amp; task</span></div>
+      <div class="arrow">→</div>
+      <div class="stage" data-stage="validate"><span class="num">2</span><span>Validation</span></div>
+      <div class="arrow">→</div>
+      <div class="stage tested" data-stage="functional"><span class="num">3</span><span>Functional tests</span></div>
+      <div class="arrow">→</div>
+      <div class="stage theory" data-stage="theory"><span class="num">4</span><span>Complexity analysis</span></div>
+      <div class="arrow">→</div>
+      <div class="stage empirical" data-stage="bench"><span class="num">5</span><span>Benchmarking</span></div>
+      <div class="arrow">→</div>
+      <div class="stage" data-stage="report"><span class="num">6</span><span>Report</span></div>
+    </section>
+
+    <section class="card about hidden" id="about">
+      <h2>Three kinds of evidence — kept separate on purpose</h2>
+      <div class="evidence-grid">
+        <div class="evidence tested">
+          <h3><span class="tag tested">Tested</span> Equivalent on tested inputs</h3>
+          <p>Both algorithms run on the <b>same generated inputs</b> (edge cases + seeded random inputs for every input profile).
+            Agreement on all of them is <b>evidence, not proof</b>: whether two arbitrary programs are equivalent for all inputs is
+            undecidable in general (Rice's theorem). One mismatch, however, <b>proves</b> they differ.</p>
+        </div>
+        <div class="evidence theory">
+          <h3><span class="tag theory">Theory</span> Theoretical complexity analysis</h3>
+          <p>The code is <b>not executed</b>. Its syntax tree is analysed: loop nesting, halving loops, early exits, recursion
+            (Master theorem), known library costs and memory allocations. The result is a <b>heuristic</b> Big-O estimate for
+            best / average / worst case, with the reasoning and a confidence level.</p>
+        </div>
+        <div class="evidence empirical">
+          <h3><span class="tag empirical">Measured</span> Empirical runtime measurements</h3>
+          <p>Both algorithms are timed on identical inputs of growing size n and several input <b>profiles</b> (e.g. sorted, reversed,
+            random). A curve fit estimates the growth rate. Measurements depend on the machine, the Python interpreter,
+            constant factors and noise — they <b>illustrate</b> but do not prove asymptotic behaviour.</p>
+        </div>
+      </div>
+      <p class="muted small">Architecture: Frontend (HTML/CSS/JS) → Flask API → Analysis service
+        (validation · tasks · functional testing · static complexity · benchmarking · report). User code only runs inside a
+        separate, resource-limited Python process.</p>
+    </section>
+
+    <!-- ================= Task ================= -->
+    <section class="card">
+      <div class="card-head">
+        <h2><span class="step">1</span> Task — what should both algorithms compute?</h2>
+        <div class="example-picker">
+          <label for="example-select">Load example pair</label>
+          <select id="example-select"><option value="">— choose an example —</option></select>
+        </div>
+      </div>
+      <div class="task-grid">
+        <div>
+          <label for="task-select">Problem</label>
+          <select id="task-select"></select>
+          <p id="task-description" class="task-description"></p>
+          <div class="signature-row">
+            <span class="muted">Required function:</span>
+            <code id="task-signature"></code>
+          </div>
+          <div class="signature-row"><span class="muted">Input size:</span> <span id="task-size"></span></div>
+        </div>
+        <div>
+          <label>Input profiles used for testing &amp; benchmarking</label>
+          <div id="task-profiles" class="profiles"></div>
+          <label for="task-notes" class="mt">Task notes <span class="muted">(optional — e.g. describe a custom task)</span></label>
+          <textarea id="task-notes" rows="2" placeholder="e.g. Count the number of inversions in the list"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Editors ================= -->
+    <section class="editors">
+      <div class="card editor-card algo-a">
+        <div class="editor-head">
+          <span class="algo-badge a">A</span>
+          <input id="name-a" class="name-input" value="Algorithm A" aria-label="Name of algorithm A" />
+          <button class="btn tiny ghost" data-clear="a" title="Clear editor">Clear</button>
+        </div>
+        <div class="editor" id="editor-a"></div>
+        <div class="validation" id="validation-a"></div>
+      </div>
+      <div class="card editor-card algo-b">
+        <div class="editor-head">
+          <span class="algo-badge b">B</span>
+          <input id="name-b" class="name-input" value="Algorithm B" aria-label="Name of algorithm B" />
+          <button class="btn tiny ghost" data-clear="b" title="Clear editor">Clear</button>
+        </div>
+        <div class="editor" id="editor-b"></div>
+        <div class="validation" id="validation-b"></div>
+      </div>
+    </section>
+
+    <!-- ================= Actions ================= -->
+    <section class="actions card">
+      <div class="options">
+        <label class="check"><input type="checkbox" id="opt-benchmark" checked /> Run empirical benchmark</label>
+        <label class="check"><input type="checkbox" id="opt-quick" /> Quick benchmark (smaller budget)</label>
+        <label class="seed">Random seed <input type="number" id="opt-seed" placeholder="auto" min="1" /></label>
+      </div>
+      <div class="buttons">
+        <button class="btn secondary" id="btn-validate">Validate both</button>
+        <button class="btn primary" id="btn-compare">Run full comparison ▶</button>
+      </div>
+    </section>
+
+    <div id="status" class="status hidden"></div>
+
+    <!-- ================= Results ================= -->
+    <section id="results" class="hidden">
+      <div class="card summary-card">
+        <div class="card-head">
+          <h2><span class="step">6</span> Comparison report</h2>
+          <span class="muted small" id="result-meta"></span>
+        </div>
+        <div class="verdicts" id="verdicts"></div>
+        <ul class="summary-list" id="summary-list"></ul>
+      </div>
+
+      <nav class="tabs" role="tablist">
+        <button class="tab active" data-tab="functional" role="tab"><span class="dot tested"></span>Functional equivalence</button>
+        <button class="tab" data-tab="theory" role="tab"><span class="dot theory"></span>Theoretical complexity</button>
+        <button class="tab" data-tab="empirical" role="tab"><span class="dot empirical"></span>Empirical measurements</button>
+      </nav>
+
+      <div class="tab-panel card" id="panel-functional"></div>
+      <div class="tab-panel card hidden" id="panel-theory"></div>
+      <div class="tab-panel card hidden" id="panel-empirical"></div>
+    </section>
+  </main>
+
+  <footer class="footer">AlgoCompare · Algorithm Design course project · Phase 1</footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
